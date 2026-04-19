@@ -52,15 +52,22 @@ model Reminder {
 }
 
 model Medicine {
-  id         String   @id @default(cuid())
-  name       String
-  barcode    String?  @unique
-  quantity   Int      @default(0)
-  unit       String?
-  note       String?
-  created_at DateTime @default(now())
-  user       User     @relation(fields: [user_id], references: [id])
-  user_id    String
+  id           String   @id @default(cuid())
+  name         String
+  generic_name String?    // Hoạt chất (generic)
+  dosage       String?
+  quantity     Int      @default(0)
+  unit         String?
+  expiry_date  DateTime?
+  category     String?
+  barcode      String?  @unique
+  manufacturer String?
+  location     String?
+  notes        String?
+
+  created_at   DateTime @default(now())
+  user         User     @relation(fields: [user_id], references: [id])
+  user_id      String
 }
 
 model FamilyMember {
