@@ -1,0 +1,37 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String         @id @default(cuid())
+  phone         String         @unique
+  full_name     String
+  created_at    DateTime       @default(now())
+  emergencyCard EmergencyCard?
+}
+
+model EmergencyCard {
+  id                 String             @id @default(cuid())
+  qr_code            String             @unique
+  blood_type         String
+  allergies          String[]
+  medical_history    String[]
+  current_medicines  String[]
+  user               User               @relation(fields: [user_id], references: [id])
+  user_id            String             @unique
+  emergency_contacts EmergencyContact[]
+}
+
+model EmergencyContact {
+  id                String        @id @default(cuid())
+  name              String
+  phone             String
+  relation          String
+  emergency_card    EmergencyCard @relation(fields: [emergency_card_id], references: [id])
+  emergency_card_id String
+}
