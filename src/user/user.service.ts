@@ -1,6 +1,25 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
+function parseVietnameseDate(input: string): Date | null {
+  if (!input) return null;
+
+  const m = input.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+  if (!m) {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(input)) {
+      // YYYY-MM-DD → parse as UTC để tránh timezone shift
+      const [y, mo, d] = input.split('-').map(Number);
+      return new Date(Date.UTC(y, mo - 1, d));
+    }
+    return null;
+  }
+  const day = Number(m[1]);
+  const month = Number(m[2]);
+  const year = Number(m[3]);
+
+  return new Date(Date.UTC(year, month - 1, day));
+}
+
 @Injectable()
 export class UserService {
   constructor(private prisma: PrismaService) {}
@@ -20,12 +39,16 @@ export class UserService {
     });
 
     if (!user) {
-      // Trường hợp gần như không xảy ra vì JWT đã check user, nhưng để TS khỏi kêu
       return {
         status: 'error',
         data: null,
       };
     }
+
+    // Trả dob dạng YYYY-MM-DD để FE format thành DD/MM/YYYY
+    const dobString = user.date_of_birth
+      ? user.date_of_birth.toISOString().slice(0, 10)
+      : null;
 
     return {
       status: 'success',
@@ -33,7 +56,7 @@ export class UserService {
         id: user.id,
         phone: user.phone,
         full_name: user.full_name,
-        dob: user.date_of_birth,      // FE đọc ở đây
+        dob: dobString,
         created_at: user.created_at,
       },
     };
@@ -50,9 +73,10 @@ export class UserService {
       updateData.full_name = data.fullName;
     }
 
-    // dob -> date_of_birth
+    // dob -> date_of_birth (nhận DD/MM/YYYY, DD-MM-YYYY hoặc YYYY-MM-DD)
     if (data.dob !== undefined && data.dob !== null && data.dob !== '') {
-      updateData.date_of_birth = new Date(data.dob);
+      const parsed = parseVietnameseDate(data.dob);
+      updateData.date_of_birth = parsed;
     } else if (data.dob === null) {
       updateData.date_of_birth = null;
     }
@@ -69,13 +93,17 @@ export class UserService {
       },
     });
 
+    const dobString = user.date_of_birth
+      ? user.date_of_birth.toISOString().slice(0, 10)
+      : null;
+
     return {
       status: 'success',
       data: {
         id: user.id,
         phone: user.phone,
         full_name: user.full_name,
-        dob: user.date_of_birth,
+        dob: dobString,
         created_at: user.created_at,
       },
     };
@@ -98,11 +126,15 @@ export class UserService {
       include: { emergency_contacts: true },
     });
 
+    const dobString = user?.date_of_birth
+      ? user.date_of_birth.toISOString().slice(0, 10)
+      : null;
+
     return {
       status: 'success',
       data: {
         full_name: user?.full_name ?? null,
-        dob: user?.date_of_birth ?? null, // FE đọc dob ở đây
+        dob: dobString, // FE đọc dob ở đây (YYYY-MM-DD)
 
         ...(card ?? {}),
       },
