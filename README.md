@@ -65,9 +65,9 @@ Server chạy tại: `http://localhost:3000`
 
 ## API Documentation
 
-Swagger UI: `http://localhost:3000/api/docs`
+Swagger UI: `http://localhost:3000/api-docs`
 
-Production: `https://medcare-backend-production.up.railway.app/api/docs`
+Production: `https://medcare-backend-production.up.railway.app/api-docs`
 
 ---
 
